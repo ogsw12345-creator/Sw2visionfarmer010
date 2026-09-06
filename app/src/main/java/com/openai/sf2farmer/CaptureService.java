@@ -33,7 +33,7 @@ public class CaptureService extends Service {
         super.onCreate();
         createChannel();
         startForeground(NOTIF_ID, notification("Bereit"));
-        thread=new HandlerThread("SF2Vision", Process.THREAD_PRIORITY_DISPLAY); thread.start();
+        thread=new HandlerThread("SF2Vision", android.os.Process.THREAD_PRIORITY_DISPLAY); thread.start();
         handler=new Handler(thread.getLooper());
     }
 
