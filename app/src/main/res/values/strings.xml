@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SF2 Vision Farmer</string>
+    <string name="accessibility_desc">Steuert Shadow Fight 2 über Gesten. Die App liest keine persönlichen Inhalte und verwendet kein Netzwerk.</string>
+</resources>
