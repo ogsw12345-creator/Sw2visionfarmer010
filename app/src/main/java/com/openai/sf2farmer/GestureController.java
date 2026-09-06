@@ -22,7 +22,7 @@ public class GestureController {
     private float y(float n) { return n*height; }
     private BotAccessibilityService svc() { return BotAccessibilityService.instance; }
 
-    public boolean available() { return svc()!=null; }
+    public boolean available() { return svc()!=null && svc().ready(); }
     public void neutral(long ms) { try { Thread.sleep(ms); } catch (InterruptedException ignored) {} }
 
     public void walk(int dir, long ms) {
@@ -80,3 +80,4 @@ public class GestureController {
         BotAccessibilityService s=svc(); if(s!=null)s.tap(x(nx),y(ny),55);
     }
 }
+

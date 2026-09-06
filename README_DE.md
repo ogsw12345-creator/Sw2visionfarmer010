@@ -1,45 +1,40 @@
-# SF2 Vision Farmer
+# SF2 Vision Farmer – Kettensense 1.1
 
-Lokaler Android-Bot für **Shadow Fight 2 Special Edition**. Er verändert keine Save-Dateien und benötigt kein Root, keinen API-Key und kein Internet. Die App nimmt den Bildschirm über Android MediaProjection auf, erkennt Kampfsituationen lokal und sendet Touch-Gesten über einen AccessibilityService.
+Android-App für Shadow Fight 2 Special Edition (`com.nekki.shadowfight2.paid`). Ziel ist ein unbeaufsichtigter Survival-Ablauf mit hoher Goldausbeute. Diese Version ist eine experimentelle Grundlage und noch kein nachgewiesen zuverlässiger Nachtfarmer.
 
-## Auf deinen Clips kalibriert
-- Landscape 2340 × 1080
-- Joystick links unten
-- Schlag rechts
-- Tritt rechts unten
-- erkennt rote Lebensbalken als Kampfstatus
-- verfolgt die zwei dunklen Kämpfer-Silhouetten
-- unterscheidet große/mittlere/enge Distanz
-- Dash, Vorwärtsschlag, kurze Combos, Sweep/Low Kick und Neutral/Auto-Block
-- erkennt grob Kämpfer am Boden
-- optionaler automatischer Runden-/Survival-Fortschritt
+## Was sich geändert hat
 
-## Installation der fertigen APK
-Die GitHub-Action `.github/workflows/build-apk.yml` baut automatisch eine installierbare Debug-APK.
+- Kettensense: einen Distanzbereich halten, bei Nähe zurückweichen, bei zu großer Entfernung kurze Schritte statt Dash zum Gegner. Am Rand angreifen statt endlos zurücklaufen.
+- Bei fehlender/mehrdeutiger Kämpfererkennung keine tiefen Tritte mehr. Vor Eingaben müssen drei aufeinanderfolgende Erkennungen vorliegen.
+- Größerer Suchbereich; Bewegung hilft beim erstmaligen Finden der Silhouetten. Tracking wird zwischen Kämpfen zurückgesetzt. Anfangs wird Shadow links angenommen.
+- Gesten nur bei sichtbarem SF2; laufende Gesten werden nicht durch neue Aktionen unterbrochen. Keine verzögerten blinden Menüklicks nach STOP.
+- Lokale Texterkennung für deutsche/englische Survival-, Kampf- und Ergebnis-Schaltflächen. Die tatsächlich erkannte Textposition wird angetippt. Ein Kampfbefehl benötigt eine zuvor erkannte Survival-Auswahl.
+- Menüaktionen müssen in zwei aufeinanderfolgenden OCR-Ergebnissen übereinstimmen. Veraltete Ergebnisse werden verworfen. Unbekannte Menüs bleiben unangetastet, festhängende Schaltflächen erhalten höchstens zwei Wiederholungen.
+- Nach 15 Sekunden ohne neue Bildschirmbilder stoppt die Aufnahme. Ein erneuter Start benötigt wieder Androids Aufnahmefreigabe.
 
-1. Projekt in ein GitHub-Repository hochladen.
-2. Tab **Actions** → **Build Android APK** → **Run workflow**.
-3. Nach Abschluss das Artifact `SF2VisionFarmer-debug-apk` herunterladen.
-4. `app-debug.apk` auf dem Samsung installieren.
+## Lernfunktion und Grenzen
 
-Die Debug-APK ist von Android/Gradle signiert und kann direkt installiert werden. Da sie nicht aus dem Play Store stammt, muss Android einmalig die Installation aus der jeweiligen Quelle erlauben.
+Das Profil **Distanz lernen** vergleicht drei Distanzbereiche. Explizit erkannte Siege/Niederlagen und die Zeit bis zum Ergebnis liefern eine einfache Bewertung. Versuche, Durchschnittswerte und Ergebniszähler bleiben lokal in den App-Daten erhalten.
 
-## Verwendung
-1. App öffnen.
-2. `Bedienungshilfe aktivieren` → SF2 Vision Farmer erlauben.
-3. Profil wählen. Für den ersten Test: **Ausgewogen**.
-4. `Bot starten + SF2 öffnen`.
-5. Bildschirmaufnahme bestätigen.
-6. Bot läuft im Hintergrund und steuert SF2.
-7. Stoppen über die permanente Benachrichtigung.
+Das ist ein kleiner lernender Auswahlalgorithmus, kein aus YouTube trainiertes neuronales Modell. Nur eindeutig erkannte Ergebnisse werden berücksichtigt. Runden ohne erkennbaren Ergebnistext liefern keine Lernbewertung. Die Zeitbewertung ist ein Ersatzmaß; **Gold/h wird noch nicht automatisch gemessen oder optimiert**. Die beiden festen Profile verändern die Lerndaten nicht.
 
-## Profile
-- **Ausgewogen:** Standardkalibrierung.
-- **Sicher:** etwas mehr Abstand und Block-/Konterverhalten.
-- **Aggressiv:** schließt Distanz schneller und greift häufiger an.
+Die Distanzgrenzen, Tastenpositionen und Angriffstakte benötigen einen Test mit der ausgerüsteten Kettensense. Bildschirmpositionen basieren auf dem bisherigen Layout 2340 × 1080 und werden proportional skaliert. Andere Seitenverhältnisse, App-Teilaufnahme oder verschobene Tasten können falsche Eingaben verursachen. Bei Seitenwechseln/Überlagerungen und anderen Arenen kann die heuristische Erkennung ausfallen. Es gibt noch keine verifizierte Erkennung für jedes Belohnungsfenster, Energieproblem oder Spielabsturz. Ein unbekanntes Menü benötigt einen Screenshot zur Anpassung.
 
-## Datenschutz / Netzwerk
-Die App enthält keine `INTERNET`-Berechtigung. Frames werden nur lokal im RAM verarbeitet und nicht gespeichert oder übertragen.
+## Benutzung
 
-## Hinweis
-Die Vision-Engine ist heuristisch und auf die hochgeladenen Aufnahmen kalibriert. SF2 ist animationsgebunden; der Bot kann Kämpfe verlieren. Der erste reale Test auf dem Zielgerät ist deshalb weiterhin wichtig, um Schwellenwerte/Timing bei Bedarf zu optimieren.
+1. Debug-APK installieren, Bedienungshilfe aktivieren, Kettensense im Spiel ausrüsten.
+2. Profil wählen. **Distanz lernen** probiert die drei Reichweiten aus; **großer Abstand** bleibt bei einer festen Variante.
+3. Bot starten und bei Androids Bildschirmfreigabe **gesamten Bildschirm** auswählen. Spiel im Querformat halten.
+4. Survival öffnen, falls die Startkarte noch nicht erkannt wird. Die App bedient nur explizit erkannte Menüs.
+5. Zuerst mehrere Kämpfe, eine Niederlage und einen vollständigen Neustart beobachten. Dann einen längeren Probelauf durchführen. Die ganze Nacht ist bisher nicht auf einem Gerät geprüft.
+6. STOP in der Benachrichtigung oder in der App beendet den Lauf.
+
+Nach einer Aktualisierung kann Android wegen unterschiedlicher Debug-Signaturen eine Neuinstallation verlangen. Deinstallation löscht die lokalen Lerndaten.
+
+## Build und Prüfung
+
+GitHub Actions baut bei Pull Requests sowie auf main/master und manuell eine Debug-APK. Der Build führt zuerst `bash tests/run.sh` aus. Diese Regressionstests prüfen Abstandhalten in beiden Richtungen, Verhalten am Rand/am Boden sowie Menüfreigaben und Mehrdeutigkeiten. Sie ersetzen keinen Spieltest.
+
+Das Artefakt heißt `SF2VisionFarmer-debug-apk`. Die gebündelte ML-Kit-Texterkennung vergrößert die APK; ihr Modell wird mitgeliefert. Verarbeitete Bildschirmkopien werden nach OCR freigegeben. Es werden keine Videos oder Screenshots archiviert.
+
+Die Datei `SF2VisionFarmer_AutoX.js` ist eine ältere, nicht aktualisierte Alternative. Die Änderungen gelten für die Android-App.

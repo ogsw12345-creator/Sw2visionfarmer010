@@ -1,6 +1,7 @@
 name: Build Android APK
 
 on:
+  pull_request:
   workflow_dispatch:
   push:
     branches: [ main, master ]
@@ -25,6 +26,9 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Test decisions and menu guards
+        run: bash tests/run.sh
+
       - name: Build debug APK
         run: gradle --no-daemon :app:assembleDebug
 
@@ -34,3 +38,4 @@ jobs:
           name: SF2VisionFarmer-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
