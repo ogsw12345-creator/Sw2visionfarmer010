@@ -2,8 +2,6 @@ package com.openai.sf2farmer;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 public class LoopTest {
@@ -20,10 +18,16 @@ public class LoopTest {
         }
     }
     VisionEngine.Frame frame(String name,int w,int h)throws Exception{
-        BufferedImage original=ImageIO.read(getClass().getResourceAsStream("/"+name+".jpg"));
+        // Android's compile API omits desktop classes; the host test JVM has ImageIO.
+        Object original=Class.forName("javax.imageio.ImageIO").getMethod("read",java.io.InputStream.class)
+            .invoke(null,getClass().getResourceAsStream("/"+name+".jpg"));
+        Class<?> imageClass=Class.forName("java.awt.image.BufferedImage");
+        int ow=(Integer)imageClass.getMethod("getWidth").invoke(original);
+        int oh=(Integer)imageClass.getMethod("getHeight").invoke(original);
+        java.lang.reflect.Method rgb=imageClass.getMethod("getRGB",int.class,int.class);
         ByteBuffer bytes=ByteBuffer.allocate(w*h*4);
         for(int y=0;y<h;y++)for(int x=0;x<w;x++){
-            int c=original.getRGB(x*original.getWidth()/w,y*original.getHeight()/h);
+            int c=(Integer)rgb.invoke(original,x*ow/w,y*oh/h);
             bytes.put((byte)(c>>16)).put((byte)(c>>8)).put((byte)c).put((byte)255);
         }
         return new VisionEngine.Frame(w,h,bytes,w*4,4);
