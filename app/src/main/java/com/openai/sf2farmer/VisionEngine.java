@@ -20,12 +20,24 @@ public class VisionEngine {
         boolean fight=fightActive(f);
 
         // May's exhaustion popup: always choose SPÄTER, never HÄNDLER.
-        if(!fight && tiredShopPopup(f)){
+        if(tiredShopPopup(f)){
+            if(!BotState.autoAdvance) return;
             if(now-lastLaterTapAt>1800 && now>=nextActionAt){
                 input.tapNormalized(.422f,.760f);
                 lastLaterTapAt=now; nextActionAt=now+1400; noFightSince=now;
                 BotState.status="Erschöpft-Popup → SPÄTER";
             }
+            return;
+        }
+
+        // Recognised buttons take priority over health-bar colour heuristics.
+        // Result OK is at 86% height, not the old 78/82% guesses.
+        if(lightButton(f,.50f,.860f)){
+            menuTap(now,.50f,.860f,"Ergebnis → OK");
+            return;
+        }
+        if(lightButton(f,.82f,.830f)){
+            menuTap(now,.82f,.830f,"Überleben → KÄMPFT!");
             return;
         }
 
@@ -44,28 +56,35 @@ public class VisionEngine {
     }
 
     private void handleNoFight(long now,Frame f){
-        if(!BotState.autoAdvance) return;
-        long quiet=now-noFightSince;
-        if(quiet<2800 || now<nextActionAt) return;
-        if(now-lastFightSeen<5500){
-            nextActionAt=now+900; BotState.status="Rundenübergang → warten"; return;
-        }
-        if(quiet<8500){
-            input.tapNormalized(.50f,.82f);
-            nextActionAt=now+1600; BotState.status="Menü → OK/Weiter"; return;
-        }
-        if(mapLike(f)){
-            input.tapNormalized(.43f,.56f);
-            nextActionAt=now+1300;
-            new Thread(() -> {
-                try{ Thread.sleep(950); }catch(InterruptedException ignored){ Thread.currentThread().interrupt(); }
-                input.tapNormalized(.80f,.82f);
-            }).start();
-            BotState.status="Karte → Überleben/KÄMPFT!";
-        }else{
-            input.tapNormalized(.50f,.78f);
-            nextActionAt=now+1800; BotState.status="Menü → Weiter";
-        }
+        BotState.status="Übergang → warte auf Kampf oder Menübutton";
+    }
+
+    private void menuTap(long now,float x,float y,String status){
+        if(!BotState.autoAdvance || now<nextActionAt) return;
+        input.tapNormalized(x,y);
+        nextActionAt=now+1400;
+        noFightSince=now;
+        BotState.status=status;
+    }
+
+    private boolean lightButton(Frame f,float cx,float cy){
+        // Require both pale button wings, dark lettering and darker surroundings.
+        return paleRatio(f,cx-.050f,cx-.025f,cy-.013f,cy+.013f)>.70f
+            && paleRatio(f,cx+.025f,cx+.050f,cy-.013f,cy+.013f)>.70f
+            && paleRatio(f,cx-.016f,cx+.016f,cy-.012f,cy+.012f)<.85f
+            && paleRatio(f,cx-.04f,cx+.04f,cy-.070f,cy-.050f)<.35f
+            && paleRatio(f,cx-.04f,cx+.04f,cy+.050f,cy+.070f)<.35f;
+    }
+
+    private float paleRatio(Frame f,float l,float r,float t,float b){
+        int hits=0,total=0;
+        for(int y=(int)(f.h*t);y<(int)(f.h*b);y+=2)
+            for(int x=(int)(f.w*l);x<(int)(f.w*r);x+=2){
+                int c=f.rgb(x,y),rr=(c>>16)&255,gg=(c>>8)&255,bb=c&255;
+                if(rr>180 && gg>155 && bb>105 && rr>=gg && gg>=bb) hits++;
+                total++;
+            }
+        return total==0?0:hits/(float)total;
     }
 
     private boolean fightActive(Frame f){
