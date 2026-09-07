@@ -9,6 +9,7 @@ public class VisionEngine {
     private long nextActionAt=0, lastFightSeen=0, noFightSince=0, lastLaterTapAt=0;
 
     public VisionEngine(int w,int h){ input=new GestureController(w,h); }
+    VisionEngine(GestureController input){ this.input=input; }
     public void resize(int w,int h){ input.resize(w,h); }
 
     public void onFrame(Image image){
@@ -16,8 +17,11 @@ public class VisionEngine {
         long now=System.currentTimeMillis();
         int w=image.getWidth(), h=image.getHeight();
         input.resize(w,h);
-        Frame f=sample(image,w,h);
-        boolean fight=fightActive(f);
+        processFrame(sample(image,w,h),now);
+    }
+
+    void processFrame(Frame f,long now){
+        if(!BotState.running || !input.available()) return;
 
         // May's exhaustion popup: always choose SPÄTER, never HÄNDLER.
         if(tiredShopPopup(f)){
@@ -36,12 +40,14 @@ public class VisionEngine {
             menuTap(now,.50f,.860f,"Ergebnis → OK");
             return;
         }
-        if(lightButton(f,.82f,.830f)){
-            menuTap(now,.82f,.830f,"Überleben → KÄMPFT!");
+        if(lightButton(f,.819f,.828f)){
+            menuTap(now,.819f,.828f,"Überleben → KÄMPFT!");
             return;
         }
 
-        if(fight){
+        // Between recognised menus, repeatedly press ONLY punch. HP and
+        // round animations must never disable punching.
+        {
             lastFightSeen=now; noFightSince=0;
             if(now>=nextActionAt){
                 input.punch();
@@ -51,8 +57,6 @@ public class VisionEngine {
             return;
         }
 
-        if(noFightSince==0) noFightSince=now;
-        handleNoFight(now,f);
     }
 
     private void handleNoFight(long now,Frame f){
@@ -69,10 +73,10 @@ public class VisionEngine {
 
     private boolean lightButton(Frame f,float cx,float cy){
         // Require both pale button wings, dark lettering and darker surroundings.
-        return paleRatio(f,cx-.050f,cx-.025f,cy-.013f,cy+.013f)>.70f
-            && paleRatio(f,cx+.025f,cx+.050f,cy-.013f,cy+.013f)>.70f
+        return paleRatio(f,cx-.060f,cx-.049f,cy-.008f,cy+.008f)>.70f
+            && paleRatio(f,cx+.049f,cx+.060f,cy-.008f,cy+.008f)>.70f
             && paleRatio(f,cx-.016f,cx+.016f,cy-.012f,cy+.012f)<.85f
-            && paleRatio(f,cx-.04f,cx+.04f,cy-.070f,cy-.050f)<.35f
+            && paleRatio(f,cx-.04f,cx+.04f,cy-.070f,cy-.050f)<.65f
             && paleRatio(f,cx-.04f,cx+.04f,cy+.050f,cy+.070f)<.35f;
     }
 
