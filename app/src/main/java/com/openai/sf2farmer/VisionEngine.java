@@ -14,6 +14,7 @@ public class VisionEngine {
     private long lastFightSeen=0;
     private long noFightSince=0;
     private long pendingCounterAt=0;
+    private long lastLaterTapAt=0;
     private int combo=0;
     private float playerX=-1, enemyX=-1, lastEnemyX=-1;
     private long lastFrameAt=0;
@@ -32,6 +33,20 @@ public class VisionEngine {
         int w=image.getWidth(), h=image.getHeight(); input.resize(w,h);
         Frame f=sample(image,w,h);
         boolean fight=fightActive(f);
+
+        // May's exhaustion/shop popup appears after roughly five Survival fights.
+        // Detect the orange "SPÄTER" button next to the green "HÄNDLER" button
+        // and dismiss it before the generic no-fight/menu handling can mis-tap.
+        if(!fight && tiredShopPopup(f)){
+            if(now-lastLaterTapAt>1800 && now>=nextActionAt){
+                input.tapNormalized(.422f,.760f);
+                lastLaterTapAt=now;
+                nextActionAt=now+1400;
+                noFightSince=now;
+                BotState.status="Erschöpft-Popup → SPÄTER";
+            }
+            return;
+        }
 
         if(fight){
             lastFightSeen=now; noFightSince=0;
@@ -143,7 +158,11 @@ public class VisionEngine {
             if(r>125 && r>g*1.45 && r>b*1.45 && g<125) red++;
             total++;
         }
-        return red>Math.max(18,total/40);
+        // Both health bars shrink with damage. The old threshold (total/40)
+        // stopped recognizing the fight once little red health remained, so
+        // the bot stopped attacking at exactly the worst moment. A small but
+        // still spatially constrained red HUD signal is sufficient here.
+        return red>Math.max(6,total/170);
     }
 
     private boolean mapLike(Frame f){
@@ -154,6 +173,41 @@ public class VisionEngine {
         if(n==0)return false;
         float rr=r/(float)n,gg=g/(float)n,bb=b/(float)n;
         return rr>95 && gg>75 && Math.abs(rr-gg)<55 && gg-bb<45;
+    }
+
+    private boolean tiredShopPopup(Frame f){
+        // The popup is resolution-independent in landscape: orange button on
+        // the left and bright green button on the right at about 76% height.
+        float orange=coloredRatio(f,.350f,.493f,.727f,.793f,true);
+        float green=coloredRatio(f,.505f,.650f,.727f,.793f,false);
+
+        // A light parchment centre prevents similarly coloured arena/menu
+        // elements from triggering this special-case tap.
+        int light=0,total=0;
+        for(int y=(int)(f.h*.22f);y<(int)(f.h*.66f);y+=12){
+            for(int x=(int)(f.w*.36f);x<(int)(f.w*.66f);x+=12){
+                int c=f.rgb(x,y), r=(c>>16)&255, g=(c>>8)&255, b=c&255;
+                if(r>145 && g>120 && b>80 && r>=g && g>b) light++;
+                total++;
+            }
+        }
+        return orange>.055f && green>.055f && total>0 && light>total*.42f;
+    }
+
+    private float coloredRatio(Frame f,float l,float r,float t,float b,boolean orange){
+        int hit=0,total=0;
+        for(int y=(int)(f.h*t);y<(int)(f.h*b);y+=4){
+            for(int x=(int)(f.w*l);x<(int)(f.w*r);x+=4){
+                int c=f.rgb(x,y), rr=(c>>16)&255, gg=(c>>8)&255, bb=c&255;
+                if(orange){
+                    if(rr>135 && rr>gg*1.20f && gg>45 && gg<155 && bb<95) hit++;
+                }else{
+                    if(gg>120 && gg>rr*1.08f && gg>bb*1.55f && rr>55) hit++;
+                }
+                total++;
+            }
+        }
+        return total==0?0:hit/(float)total;
     }
 
     private void track(Fighters fs){
