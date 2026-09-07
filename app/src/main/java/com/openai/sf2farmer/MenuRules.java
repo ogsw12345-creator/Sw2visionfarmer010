@@ -28,6 +28,17 @@ public final class MenuRules {
         }
         return win==lose?0:win?1:-1;
     }
+    /** Only the two user-confirmed buttons, within their screenshot regions. */
+    public static Label simpleTarget(List<Label> lines){
+        if(blocked(lines))return null;
+        for(Label l:lines){
+            if(l.text.equals("ok") && l.x>.40f && l.x<.60f && l.y>.78f && l.y<.94f)return l;
+            if((l.text.equals("kampft")||l.text.equals("fight")) &&
+                l.x>.73f && l.x<.91f && l.y>.73f && l.y<.92f)return l;
+        }
+        return null;
+    }
+
     public static Label target(List<Label> lines,boolean survivalSelected){
         if(blocked(lines))return null;
         boolean result=outcome(lines)!=0;

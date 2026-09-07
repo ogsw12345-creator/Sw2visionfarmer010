@@ -26,6 +26,11 @@ public class PolicyTest {
         check(MenuRules.outcome(Arrays.asList(label("Victory",.3f),label("Defeat",.4f)))==0,"Reject ambiguous outcome");
         check(MenuRules.outcome(Arrays.asList(label("Defeat",.3f)))==-1,"English defeat");
         check(MenuRules.target(Arrays.asList(label("Victory bonus",.3f),label("Continue",.8f)),false)==null,"No substring outcome");
+        check(MenuRules.simpleTarget(Arrays.asList(new MenuRules.Label("KÄMPFT!",.819f,.828f)))!=null,"Screenshot fight button");
+        check(MenuRules.simpleTarget(Arrays.asList(new MenuRules.Label("BESIEGT",.5f,.1f),new MenuRules.Label("OK",.5f,.86f)))!=null,"Screenshot result button");
+        check(MenuRules.simpleTarget(Arrays.asList(new MenuRules.Label("OK",.8f,.3f)))==null,"Wrong OK position");
+        check(MenuRules.simpleTarget(Arrays.asList(new MenuRules.Label("Überleben",.819f,.14f)))==null,"Never tap survival label");
+        check(MenuRules.simpleTarget(Arrays.asList(new MenuRules.Label("Weiter",.5f,.86f)))==null,"Only OK not Continue");
         System.out.println("Policy and menu regression tests passed");
     }
 }
