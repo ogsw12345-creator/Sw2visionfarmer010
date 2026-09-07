@@ -8,8 +8,8 @@ android {
         applicationId 'com.openai.sf2farmer'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '1.0'
+        versionCode 3
+        versionName '1.2-simple'
     }
 
     buildTypes {
@@ -22,3 +22,6 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 }
+
+
+dependencies { implementation 'com.google.mlkit:text-recognition:16.0.1' }

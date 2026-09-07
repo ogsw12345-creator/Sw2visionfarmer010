@@ -9,10 +9,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BotAccessibilityService extends AccessibilityService {
+    public static final String GAME="com.nekki.shadowfight2.paid";
+    private volatile String foreground="";
+    private volatile long busyUntil=0;
+    public boolean gameVisible(){ return GAME.equals(foreground); }
+    public boolean ready(){return BotState.running && gameVisible() && android.os.SystemClock.uptimeMillis()>=busyUntil;}
+    private synchronized boolean send(GestureDescription gesture){
+        if(!ready())return false;
+        long end=0;
+        for(int i=0;i<gesture.getStrokeCount();i++){
+            GestureDescription.StrokeDescription s=gesture.getStroke(i);
+            end=Math.max(end,s.getStartTime()+s.getDuration());
+        }
+        busyUntil=android.os.SystemClock.uptimeMillis()+end+250;
+        boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
+            @Override public void onCompleted(GestureDescription g){busyUntil=0;}
+            @Override public void onCancelled(GestureDescription g){busyUntil=0;}
+        },null);
+        if(!accepted)busyUntil=0;
+        return accepted;
+    }
+
     public static volatile BotAccessibilityService instance;
 
     @Override public void onServiceConnected() { instance = this; }
-    @Override public void onAccessibilityEvent(AccessibilityEvent event) {}
+    @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+        if(event.getPackageName()!=null)foreground=event.getPackageName().toString();
+    }
     @Override public void onInterrupt() {}
     @Override public void onDestroy() { if (instance == this) instance = null; super.onDestroy(); }
 
@@ -27,7 +50,7 @@ public class BotAccessibilityService extends AccessibilityService {
             Path p = new Path(); p.moveTo(s.x, s.y);
             b.addStroke(new GestureDescription.StrokeDescription(p, s.start, Math.max(1, s.duration)));
         }
-        return dispatchGesture(b.build(), null, null);
+        return send(b.build());
     }
 
     public boolean sequence(List<Stroke> strokes) {
@@ -36,7 +59,7 @@ public class BotAccessibilityService extends AccessibilityService {
             Path p = new Path(); p.moveTo(s.x, s.y);
             b.addStroke(new GestureDescription.StrokeDescription(p, s.start, Math.max(1, s.duration)));
         }
-        return dispatchGesture(b.build(), null, null);
+        return send(b.build());
     }
 
     public static final class Stroke {
@@ -47,3 +70,4 @@ public class BotAccessibilityService extends AccessibilityService {
         }
     }
 }
+

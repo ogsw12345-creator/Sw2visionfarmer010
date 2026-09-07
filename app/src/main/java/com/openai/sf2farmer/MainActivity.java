@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
         super.onCreate(b);setContentView(R.layout.activity_main);
         status=findViewById(R.id.status);spinner=findViewById(R.id.profileSpinner);autoAdvance=findViewById(R.id.autoAdvance);
         ArrayAdapter<String> a=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"Ausgewogen (empfohlen)","Sicher / mehr blocken","Aggressiv / schneller farmen"});
+                new String[]{"Einfachmodus: nur Schlagen + KÄMPFT / OK"});
         spinner.setAdapter(a);
         findViewById(R.id.accessibilityBtn).setOnClickListener(v->startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
         findViewById(R.id.startBtn).setOnClickListener(v->startBot());
@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},990);
     }
 
-    @Override protected void onResume(){super.onResume();status.setText(accessibilityEnabled()?"Bedienungshilfe aktiv – bereit":"Bitte zuerst Bedienungshilfe aktivieren");}
+    @Override protected void onResume(){super.onResume();status.setText(accessibilityEnabled()?"Bereit – Einfachmodus: nur Schlagen":"Bitte zuerst Bedienungshilfe aktivieren");}
 
     private void startBot(){
         if(!accessibilityEnabled()){Toast.makeText(this,"Bitte zuerst die Bedienungshilfe für SF2 Vision Farmer aktivieren.",Toast.LENGTH_LONG).show();startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));return;}
@@ -58,3 +58,4 @@ public class MainActivity extends Activity {
         return BotAccessibilityService.instance!=null;
     }
 }
+
